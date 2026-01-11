@@ -2,11 +2,17 @@ name: CI Pipeline
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
   pull_request:
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
+# =========================
+# BACKEND CI
+# =========================
   backend-ci:
     name: Backend CI
     runs-on: ubuntu-latest
@@ -24,15 +30,22 @@ jobs:
         working-directory: app/backend
         run: npm install
 
-      - name: Run backend tests (placeholder)
+      - name: Run ESLint (Backend)
         working-directory: app/backend
-        run: echo "No tests yet"
+        run: npm run lint
+
+      - name: Run backend tests
+        working-directory: app/backend
+        run: npm test
 
       - name: Backend dependency security scan
         working-directory: app/backend
-        run: npm audit --audit-level=high || true
+        run: npm audit --audit-level=high
 
 
+# =========================
+# FRONTEND CI
+# =========================
   frontend-ci:
     name: Frontend CI
     runs-on: ubuntu-latest
@@ -50,17 +63,25 @@ jobs:
         working-directory: app/frontend
         run: npm install
 
+      - name: Run ESLint (Frontend)
+        working-directory: app/frontend
+        run: npm run lint
+
       - name: Build frontend
         working-directory: app/frontend
         run: npm run build
 
+      # Frontend audit is informational (does not fail CI)
       - name: Frontend dependency security scan
         working-directory: app/frontend
         run: npm audit --audit-level=high || true
 
 
+# =========================
+# DOCKER BUILD + SECURITY
+# =========================
   docker-build:
-    name: Docker Build
+    name: Docker Build & Security Scan
     runs-on: ubuntu-latest
     needs: [backend-ci, frontend-ci]
 
@@ -71,10 +92,32 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Backend Docker image
-        run: docker build -t backend:test app/backend
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build Frontend Docker image
-        run: docker build -t frontend:test app/frontend
+      - name: Build Backend Image
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/devsecops-backend:latest app/backend
+
+      - name: Build Frontend Image
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/devsecops-frontend:latest app/frontend
+
+      - name: Scan Backend Image with Trivy
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          image-ref: ${{ secrets.DOCKER_USERNAME }}/devsecops-backend:latest
+          severity: HIGH,CRITICAL
+
+      - name: Push Backend Image
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/devsecops-backend:latest
+
+      - name: Push Frontend Image
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/devsecops-frontend:latest
+
+    
 
 

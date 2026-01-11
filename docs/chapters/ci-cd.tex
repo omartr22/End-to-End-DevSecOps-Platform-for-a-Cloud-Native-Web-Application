@@ -1,0 +1,40 @@
+\section{Phase 4: CI/CD Integration and DevSecOps Pipeline}
+
+\subsection{Objectives}
+\begin{itemize}
+    \item Automate build, test, and deployment of backend and frontend.
+    \item Integrate security scanning at each stage.
+    \item Ensure fast feedback for developers with CI/CD.
+\end{itemize}
+
+\subsection{CI/CD Workflow}
+We implemented GitHub Actions workflows:
+
+\begin{itemize}
+    \item Checkout repository code.
+    \item Install Node.js dependencies.
+    \item Run backend tests.
+    \item Build Docker images for backend and frontend.
+    \item Scan images using Trivy for vulnerabilities.
+    \item Deploy containers using Docker Compose.
+\end{itemize}
+
+\subsection{Security Measures}
+\begin{itemize}
+    \item ESLint for static code analysis.
+    \item npm audit for dependency scanning.
+    \item Trivy for container vulnerability scanning.
+    \item GitHub secret scanning for sensitive information.
+\end{itemize}
+
+\subsection{Verification}
+\begin{itemize}
+    \item Workflow triggered on every push to \texttt{main} branch.
+    \item All tests pass, Docker images built and scanned successfully.
+    \item Backend and frontend containers redeployed automatically.
+    \item Logs show successful deployment and security scanning.
+\end{itemize}
+
+\subsection{Conclusion}
+This phase ensures a full **DevSecOps pipeline** where code changes are automatically tested, scanned, and deployed, maintaining security, quality, and speed of delivery.
+
