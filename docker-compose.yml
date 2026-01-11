@@ -1,0 +1,46 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15
+    container_name: devsecops-db
+    environment:
+      POSTGRES_DB: devsecops_db
+      POSTGRES_USER: devsecops
+      POSTGRES_PASSWORD: secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - devsecops-net
+
+  backend:
+    build: ./app/backend
+    container_name: devsecops-backend
+    env_file:
+      - ./app/backend/.env
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+    networks:
+      - devsecops-net
+
+  frontend:
+    build: ./app/frontend
+    container_name: devsecops-frontend
+    ports:
+      - "3000:80"     # <- FIXED
+    depends_on:
+      - backend
+    networks:
+      - devsecops-net
+
+volumes:
+  db-data:
+
+networks:
+  devsecops-net:
+    driver: bridge
+
